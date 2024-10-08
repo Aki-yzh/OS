@@ -96,6 +96,7 @@ extern uint64 sys_dup(void);
 extern uint64 sys_exec(void);
 extern uint64 sys_exit(void);
 extern uint64 sys_fork(void);
+
 extern uint64 sys_fstat(void);
 extern uint64 sys_getpid(void);
 extern uint64 sys_kill(void);
@@ -117,8 +118,10 @@ extern uint64 sys_trace(void);
 extern uint64 sys_sysinfo(void);
 extern uint64 sys_rename(void);
 
+
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
+ 
   [SYS_exit]        sys_exit,
   [SYS_wait]        sys_wait,
   [SYS_pipe]        sys_pipe,
@@ -144,10 +147,12 @@ static uint64 (*syscalls[])(void) = {
   [SYS_trace]       sys_trace,
   [SYS_sysinfo]     sys_sysinfo,
   [SYS_rename]      sys_rename,
+
 };
 
 static char *sysnames[] = {
   [SYS_fork]        "fork",
+
   [SYS_exit]        "exit",
   [SYS_wait]        "wait",
   [SYS_pipe]        "pipe",
@@ -173,6 +178,7 @@ static char *sysnames[] = {
   [SYS_trace]       "trace",
   [SYS_sysinfo]     "sysinfo",
   [SYS_rename]      "rename",
+
 };
 
 void
