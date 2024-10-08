@@ -250,7 +250,6 @@ void userinit(void) {
  // and data into it. 
  uvminit(p->pagetable , p->kpagetable, initcode, sizeof(initcode)); 
  p->sz = PGSIZE;
- p->heapsize = 0; 
  // prepare for the very first "return" from kernel to user. 
  p->trapframe->epc = 0x0; // user program counter 
  p->trapframe->sp = PGSIZE; // user stack pointer 
@@ -258,9 +257,6 @@ void userinit(void) {
  p->state = RUNNABLE; 
  p->tmask = 0; 
  release(&p->lock); 
- #ifdef DEBUG 
- printf("userinit\n"); 
- #endif 
 }
 
 // Grow or shrink user memory by n bytes.
