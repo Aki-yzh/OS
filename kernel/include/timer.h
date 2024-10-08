@@ -19,6 +19,7 @@ struct tms
 	long tms_cutime; 
 	long tms_cstime; 
 };
+
 void timerinit();
 void set_next_timeout();
 void timer_tick();
