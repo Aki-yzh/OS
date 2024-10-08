@@ -99,27 +99,28 @@ linker = ./linker/qemu.ld
 endif
 
 # Compile Kernel
-$T/kernel: $(OBJS) $(linker) $U/initcode
+#$T/kernel: $(OBJS) $(linker) $U/initcode
+$T/kernel:$(OBJS)$(linker)
 	@if [ ! -d "./target" ]; then mkdir target; fi
 	@$(LD) $(LDFLAGS) -T $(linker) -o $T/kernel $(OBJS)
 	@$(OBJDUMP) -S $T/kernel > $T/kernel.asm
 	@$(OBJDUMP) -t $T/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $T/kernel.sym
-  
+	@mv $T/kernel kernel-qemu
 build: $T/kernel userprogs
 
 # Compile RustSBI
-RUSTSBI:
-ifeq ($(platform), k210)
-	@cd ./bootloader/SBI/rustsbi-k210 && cargo build && cp ./target/riscv64gc-unknown-none-elf/debug/rustsbi-k210 ../sbi-k210
-	@$(OBJDUMP) -S ./bootloader/SBI/sbi-k210 > $T/rustsbi-k210.asm
-else
-	@cd ./bootloader/SBI/rustsbi-qemu && cargo build && cp ./target/riscv64gc-unknown-none-elf/debug/rustsbi-qemu ../sbi-qemu
-	@$(OBJDUMP) -S ./bootloader/SBI/sbi-qemu > $T/rustsbi-qemu.asm
-endif
+#RUSTSBI:
+#ifeq ($(platform), k210)
+#	@cd ./bootloader/SBI/rustsbi-k210 && cargo build && cp ./target/riscv64gc-unknown-none-elf/debug/rustsbi-k210 ../sbi-k210
+#	@$(OBJDUMP) -S ./bootloader/SBI/sbi-k210 > $T/rustsbi-k210.asm
+#else
+#	@cd ./bootloader/SBI/rustsbi-qemu && cargo build && cp ./target/riscv64gc-unknown-none-elf/debug/rustsbi-qemu ../sbi-qemu
+#	@$(OBJDUMP) -S ./bootloader/SBI/sbi-qemu > $T/rustsbi-qemu.asm
+#endif
 
-rustsbi-clean:
-	@cd ./bootloader/SBI/rustsbi-k210 && cargo clean
-	@cd ./bootloader/SBI/rustsbi-qemu && cargo clean
+#rustsbi-clean:
+#	@cd ./bootloader/SBI/rustsbi-k210 && cargo clean
+#	@cd ./bootloader/SBI/rustsbi-qemu && cargo clean
 
 image = $T/kernel.bin
 k210 = $T/k210.bin
@@ -129,20 +130,18 @@ ifndef CPUS
 CPUS := 2
 endif
 
-QEMUOPTS = -machine virt -kernel $T/kernel -m 128M -nographic
+QEMUOPTS = -machine virt -kernel kernel-qemu -m 128M -nographic
 
 # use multi-core 
 QEMUOPTS += -smp $(CPUS)
 
-QEMUOPTS += -bios $(RUSTSBI)
-
+#QEMUOPTS += -bios $(RUSTSBI)
+QEMUOPTS += -bios default
 # import virtual disk image
-QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0 
+QEMUOPTS += -drive file=sdcard.img,if=none,format=raw,id=x0 
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
 run: build
-
-
 ifeq ($(platform), k210)
 	@$(OBJCOPY) $T/kernel --strip-all -O binary $(image)
 	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
@@ -243,7 +242,6 @@ sdcard: userprogs
 	@cp $U/_sh $(dst)/sh
 	@cp README $(dst)/README
 
-
 clean: 
 	rm -f kernel-qemu *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*/*.o */*.d */*.asm */*.sym \
@@ -259,8 +257,7 @@ local:
 	@make build platform=qemu
 	@make fs
 	@$(QEMU) $(QEMUOPTS)
-all: build
-    mv $T/kernel $T/kernel-qemu
-    cp $T/kernel-qemu kernel-qemu
+all: 
+	@make build platform=qemu
 test: $U/_init
 	@./runtest.sh
