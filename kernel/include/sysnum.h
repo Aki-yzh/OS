@@ -36,5 +36,8 @@
 #define SYS_shutdown   210
 #define SYS_remove      117
 
+#define SYS_brk         214
+#define SYS_clone       220
+#define SYS_wait4       260
 
 #endif

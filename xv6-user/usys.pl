@@ -41,3 +41,7 @@ entry("remove");
 entry("trace");
 entry("sysinfo");
 entry("rename");
+entry("shutdown");
+entry("getppid");
+entry("wait4");
+entry("clone");
