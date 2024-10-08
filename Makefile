@@ -231,10 +231,8 @@ fs: $(UPROGS)
 	@mount sdcard.img $(dst)
 	@if [ ! -d "$(dst)/bin" ]; then mkdir $(dst)/bin; fi
 	@cp README $(dst)/README
-	@for file in $$( ls $U/_* ); do \
-		cp $$file $(dst)/$${file#$U/_};\
-		cp $$file $(dst)/bin/$${file#$U/_}; done
-	@cp -R tests/* $(dst)
+	@for file in $$( ls $U/test__* ); do \
+        cp $$file $(dst)/$${file#$U/test__}; done
 	@umount $(dst)
 
 # Write mounted sdcard
@@ -262,5 +260,4 @@ local:
 	@make build platform=qemu
 	@make fs
 	@$(QEMU) $(QEMUOPTS)
-
 
