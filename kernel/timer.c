@@ -9,6 +9,8 @@
 #include "include/timer.h"
 #include "include/printf.h"
 #include "include/proc.h"
+#include "include/vm.h"
+#include "include/syscall.h"
 
 struct spinlock tickslock;
 uint ticks;
@@ -37,4 +39,9 @@ void timer_tick() {
     wakeup(&ticks);
     release(&tickslock);
     set_next_timeout();
+
+
+
+
+
 }

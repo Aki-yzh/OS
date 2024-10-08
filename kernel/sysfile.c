@@ -20,10 +20,20 @@
 #include "include/string.h"
 #include "include/printf.h"
 #include "include/vm.h"
-
+#include <stdint.h>
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
+struct utsname {
+	char sysname[65];
+	char nodename[65];
+	char release[65];
+	char version[65];
+	char machine[65];
+	char domainname[65];
+};
+
+
 static int
 argfd(int n, int *pfd, struct file **pf)
 {
@@ -218,7 +228,23 @@ sys_mkdir(void)
   char path[FAT32_MAX_PATH];
   struct dirent *ep;
 
-  if(argstr(1, path, FAT32_MAX_PATH) < 0 || (ep = create(path, T_DIR, 0)) == 0){
+  if(argstr(0, path, FAT32_MAX_PATH) < 0 || (ep = create(path, T_DIR, 0)) == 0){
+    return -1;
+  }
+  eunlock(ep);
+  eput(ep);
+  return 0;
+}
+
+uint64
+sys_mkdirat(void)
+{
+  int dirfd,mode;
+  char path[FAT32_MAX_PATH];
+  struct dirent *ep;
+
+  if(argint(0,&dirfd) < 0 || argstr(1, path, FAT32_MAX_PATH) < 0 || 
+    argint(2,&mode) < 0 || (ep = create(path, T_DIR, mode)) == 0){
     return -1;
   }
   eunlock(ep);
@@ -234,7 +260,7 @@ sys_chdir(void)
   struct proc *p = myproc();
   
   if(argstr(0, path, FAT32_MAX_PATH) < 0 || (ep = ename(path)) == NULL){
-    return -2;
+    return -1;
   }
   elock(ep);
   if(!(ep->attribute & ATTR_DIRECTORY)){
@@ -333,7 +359,8 @@ uint64
 sys_getcwd(void)
 {
   uint64 addr;
-  if (argaddr(0, &addr) < 0)
+  int size;
+  if (argaddr(0, &addr) < 0 || argint(1,&size) < 0)
     return -1;
 
   struct dirent *de = myproc()->cwd;
@@ -357,10 +384,14 @@ sys_getcwd(void)
     }
   }
 
+
   // if (copyout(myproc()->pagetable, addr, s, strlen(s) + 1) < 0)
+  if (addr == NULL)          
+    return NULL;
+  if (strlen(s) > size)      
+    s[size] = '\0';           
   if (copyout2(addr, s, strlen(s) + 1) < 0)
-    return -1;
-  
+    return NULL;
   return addr;
 
 }

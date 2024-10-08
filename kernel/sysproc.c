@@ -164,21 +164,26 @@ uint64
 sys_getppid(void){
   return myproc()->parent->pid;
 }
-uint64
-sys_gettimeofday(void){
-  uint64 time=r_time();
-  struct tm{
-    long s;
-    long ns;
-  };
-  struct tm tm;
-  tm.s=time/12500000;
-  tm.ns=time%12500000;
-  uint64 addr;
-  argaddr(0,&addr);
-  copyout2(addr,(char*)&tm,sizeof(tm));
-  return 0;
+
+// System call to get the current time of day
+uint64 sys_gettimeofday(void) {
+    uint64 addr;
+    struct timespec tm;
+    uint tick_counter;
+
+    if (argaddr(0, &addr) < 0)
+        return -1;
+
+    tick_counter = r_time();
+    tm.tv_sec = tick_counter / 1000000;
+    tm.tv_nsec = (tick_counter % 1000000) * 1000;
+
+    if (copyout2(addr, (char *)&tm, sizeof(tm)) < 0)
+        return -1;
+
+    return 0;
 }
+
 uint64
 sys_uname(void){
   struct uname{
@@ -194,4 +199,24 @@ sys_uname(void){
   argaddr(0,&addr);
   copyout2(addr,(char*)&uname,sizeof(uname));
   return 0;
+}
+// System call to get process times
+uint64 sys_times(void) {
+    uint64 addr;
+    struct tms tm;
+    uint tick_counter;
+
+    if (argaddr(0, &addr) < 0)
+        return -1;
+
+    tick_counter = r_time();
+    tm.tms_utime = tick_counter / 1000000;
+    tm.tms_stime = tick_counter / 1000000;
+    tm.tms_cutime = tick_counter / 1000000;
+    tm.tms_cstime = tick_counter / 1000000;
+
+    if (copyout2(addr, (char *)&tm, sizeof(tm)) < 0)
+        return -1;
+
+    return 0;
 }

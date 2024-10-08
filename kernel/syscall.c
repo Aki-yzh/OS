@@ -101,7 +101,7 @@ extern uint64 sys_fstat(void);
 extern uint64 sys_getpid(void);
 extern uint64 sys_getppid(void);
 extern uint64 sys_gettimeofday(void);
-
+extern uint64 sys_times(void);
 extern uint64 sys_kill(void);
 extern uint64 sys_mkdir(void);
 
@@ -153,7 +153,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_rename]      sys_rename,
   [SYS_getppid]     sys_getppid,
   [SYS_gettimeofday] sys_gettimeofday,
-
+  [SYS_times]       sys_times,
   [SYS_uname]       sys_uname,
   [SYS_shutdown]    sys_shutdown,
 };
@@ -186,8 +186,8 @@ static char *sysnames[] = {
   [SYS_sysinfo]     "sysinfo",
   [SYS_rename]      "rename",
   [SYS_getppid]     "getppid",
-  [SYS_gettimeofday] "gettimeofday",
-
+  [SYS_gettimeofday] "get_time",
+  [SYS_times]       "times",
   [SYS_uname]       "uname",
   [SYS_shutdown]    "shutdown",
 };
