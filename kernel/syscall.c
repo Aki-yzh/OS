@@ -101,7 +101,7 @@ extern uint64 sys_fstat(void);
 extern uint64 sys_getpid(void);
 extern uint64 sys_getppid(void);
 extern uint64 sys_gettimeofday(void);
-extern uint64 sys_times(void);
+
 extern uint64 sys_kill(void);
 extern uint64 sys_mkdir(void);
 
@@ -123,8 +123,6 @@ extern uint64 sys_sysinfo(void);
 extern uint64 sys_rename(void);
 extern uint64 sys_uname(void);
 extern uint64 sys_shutdown(void);
-//extern uint64 sys_brk(void);
-//extern uint64 sys_clone(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -155,12 +153,9 @@ static uint64 (*syscalls[])(void) = {
   [SYS_rename]      sys_rename,
   [SYS_getppid]     sys_getppid,
   [SYS_gettimeofday] sys_gettimeofday,
-  [SYS_times]       sys_times,
+
   [SYS_uname]       sys_uname,
   [SYS_shutdown]    sys_shutdown,
- // [SYS_brk]         sys_brk,
-  //[SYS_clone]       sys_clone,
-  
 };
 
 static char *sysnames[] = {
@@ -191,15 +186,10 @@ static char *sysnames[] = {
   [SYS_sysinfo]     "sysinfo",
   [SYS_rename]      "rename",
   [SYS_getppid]     "getppid",
-  [SYS_gettimeofday] "get_time",
-  [SYS_times]       "times",
+  [SYS_gettimeofday] "gettimeofday",
+
   [SYS_uname]       "uname",
   [SYS_shutdown]    "shutdown",
-
-  //[SYS_brk]         "brk",
-  //[SYS_clone]       "clone",
-  [SYS_wait4]       "wait4",
-
 };
 
 
