@@ -90,17 +90,21 @@ argstr(int n, char *buf, int max)
   return fetchstr(addr, buf, max);
 }
 
+
 extern uint64 sys_chdir(void);
 extern uint64 sys_close(void);
 extern uint64 sys_dup(void);
 extern uint64 sys_exec(void);
 extern uint64 sys_exit(void);
 extern uint64 sys_fork(void);
-
 extern uint64 sys_fstat(void);
 extern uint64 sys_getpid(void);
+extern uint64 sys_getppid(void);
+extern uint64 sys_gettimeofday(void);
+
 extern uint64 sys_kill(void);
 extern uint64 sys_mkdir(void);
+
 extern uint64 sys_open(void);
 extern uint64 sys_pipe(void);
 extern uint64 sys_read(void);
@@ -117,11 +121,11 @@ extern uint64 sys_remove(void);
 extern uint64 sys_trace(void);
 extern uint64 sys_sysinfo(void);
 extern uint64 sys_rename(void);
-
+extern uint64 sys_uname(void);
+extern uint64 sys_shutdown(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
- 
   [SYS_exit]        sys_exit,
   [SYS_wait]        sys_wait,
   [SYS_pipe]        sys_pipe,
@@ -147,12 +151,15 @@ static uint64 (*syscalls[])(void) = {
   [SYS_trace]       sys_trace,
   [SYS_sysinfo]     sys_sysinfo,
   [SYS_rename]      sys_rename,
+  [SYS_getppid]     sys_getppid,
+  [SYS_gettimeofday] sys_gettimeofday,
 
+  [SYS_uname]       sys_uname,
+  [SYS_shutdown]    sys_shutdown,
 };
 
 static char *sysnames[] = {
   [SYS_fork]        "fork",
-
   [SYS_exit]        "exit",
   [SYS_wait]        "wait",
   [SYS_pipe]        "pipe",
@@ -178,8 +185,13 @@ static char *sysnames[] = {
   [SYS_trace]       "trace",
   [SYS_sysinfo]     "sysinfo",
   [SYS_rename]      "rename",
+  [SYS_getppid]     "getppid",
+  [SYS_gettimeofday] "gettimeofday",
 
+  [SYS_uname]       "uname",
+  [SYS_shutdown]    "shutdown",
 };
+
 
 void
 syscall(void)

@@ -100,13 +100,41 @@ filestat(struct file *f, uint64 addr)
 {
   // struct proc *p = myproc();
   struct stat st;
-  
+    struct kstat {
+    uint64 st_dev;
+    uint64 st_ino;
+    int st_mode;
+    uint32 st_nlink;
+    uint32 st_uid;
+    uint32 st_gid;
+    uint64 st_rdev;
+    unsigned long __pad;
+    uint64 st_size;
+    uint32 st_blksize;
+    int __pad2;
+    uint64 st_blocks;
+    long st_atime_sec;
+    long st_atime_nsec;
+    long st_mtime_sec;
+    long st_mtime_nsec;
+    long st_ctime_sec;
+    long st_ctime_nsec;
+    unsigned __unused[2];
+  };
+  struct kstat kst = {0};
+
   if(f->type == FD_ENTRY){
     elock(f->ep);
     estat(f->ep, &st);
+    kst.st_dev = st.dev;
+    kst.st_ino = 0;
+    kst.st_mode = (f->ep->attribute & ATTR_DIRECTORY) ? T_DIR : T_FILE;
+    kst.st_nlink = f->ref;
+    kst.st_size = st.size;
+
     eunlock(f->ep);
     // if(copyout(p->pagetable, addr, (char *)&st, sizeof(st)) < 0)
-    if(copyout2(addr, (char *)&st, sizeof(st)) < 0)
+    if(copyout2(addr, (char *)&kst, sizeof(kst)) < 0)
       return -1;
     return 0;
   }

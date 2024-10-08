@@ -10,7 +10,8 @@
 #include "include/kalloc.h"
 #include "include/string.h"
 #include "include/printf.h"
-
+#include "include/sbi.h"
+#include "include/vm.h"
 extern int exec(char *path, char **argv);
 
 uint64
@@ -152,5 +153,45 @@ sys_trace(void)
     return -1;
   }
   myproc()->tmask = mask;
+  return 0;
+}
+uint64 
+sys_shutdown(void) {
+  sbi_shutdown();
+  return 0;
+}
+uint64
+sys_getppid(void){
+  return myproc()->parent->pid;
+}
+uint64
+sys_gettimeofday(void){
+  uint64 time=r_time();
+  struct tm{
+    long s;
+    long ns;
+  };
+  struct tm tm;
+  tm.s=time/12500000;
+  tm.ns=time%12500000;
+  uint64 addr;
+  argaddr(0,&addr);
+  copyout2(addr,(char*)&tm,sizeof(tm));
+  return 0;
+}
+uint64
+sys_uname(void){
+  struct uname{
+    char sysname[65];
+    char nodename[65];
+    char release[65];
+    char version[65];
+    char machine[65];
+    char domainname[65];
+  };
+  struct uname uname={"xv6","xv6","0","0","xv6","localhost"};
+  uint64 addr;
+  argaddr(0,&addr);
+  copyout2(addr,(char*)&uname,sizeof(uname));
   return 0;
 }

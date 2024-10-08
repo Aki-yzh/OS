@@ -168,7 +168,7 @@ sys_open(void)
   struct file *f;
   struct dirent *ep;
 
-  if(argstr(0, path, FAT32_MAX_PATH) < 0 || argint(1, &omode) < 0)
+   if(argint(0, &fd) < 0||argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &omode) < 0)
     return -1;
 
   if(omode & O_CREATE){
@@ -181,7 +181,7 @@ sys_open(void)
       return -1;
     }
     elock(ep);
-    if((ep->attribute & ATTR_DIRECTORY) && omode != O_RDONLY){
+    if((ep->attribute & ATTR_DIRECTORY) && (omode & O_RDONLY)){
       eunlock(ep);
       eput(ep);
       return -1;
@@ -218,7 +218,7 @@ sys_mkdir(void)
   char path[FAT32_MAX_PATH];
   struct dirent *ep;
 
-  if(argstr(0, path, FAT32_MAX_PATH) < 0 || (ep = create(path, T_DIR, 0)) == 0){
+  if(argstr(1, path, FAT32_MAX_PATH) < 0 || (ep = create(path, T_DIR, 0)) == 0){
     return -1;
   }
   eunlock(ep);
@@ -234,7 +234,7 @@ sys_chdir(void)
   struct proc *p = myproc();
   
   if(argstr(0, path, FAT32_MAX_PATH) < 0 || (ep = ename(path)) == NULL){
-    return -1;
+    return -2;
   }
   elock(ep);
   if(!(ep->attribute & ATTR_DIRECTORY)){
@@ -361,7 +361,7 @@ sys_getcwd(void)
   if (copyout2(addr, s, strlen(s) + 1) < 0)
     return -1;
   
-  return 0;
+  return addr;
 
 }
 

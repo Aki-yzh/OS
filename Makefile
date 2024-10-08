@@ -100,13 +100,17 @@ endif
 
 # Compile Kernel
 #$T/kernel: $(OBJS) $(linker) $U/initcode
-$T/kernel:$(OBJS)$(linker)
+$T/kernel: $(OBJS) $(linker) $U/initcode
 	@if [ ! -d "./target" ]; then mkdir target; fi
 	@$(LD) $(LDFLAGS) -T $(linker) -o $T/kernel $(OBJS)
 	@$(OBJDUMP) -S $T/kernel > $T/kernel.asm
 	@$(OBJDUMP) -t $T/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $T/kernel.sym
-	@mv $T/kernel kernel-qemu
+
+
 build: $T/kernel userprogs
+all: build
+	mv $T/kernel $T/kernel-qemu
+	cp $T/kernel-qemu kernel-qemu
 
 # Compile RustSBI
 #RUSTSBI:
@@ -130,13 +134,13 @@ ifndef CPUS
 CPUS := 2
 endif
 
-QEMUOPTS = -machine virt -kernel kernel-qemu -m 128M -nographic
+QEMUOPTS = -machine virt -kernel $T/kernel -m 128M -nographic
 
 # use multi-core 
 QEMUOPTS += -smp $(CPUS)
 
 #QEMUOPTS += -bios $(RUSTSBI)
-QEMUOPTS += -bios default
+
 # import virtual disk image
 QEMUOPTS += -drive file=sdcard.img,if=none,format=raw,id=x0 
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
@@ -235,7 +239,7 @@ fs: $(UPROGS)
 
 # Write mounted sdcard
 sdcard: userprogs
-	@if [ ! -d "$(dst)/bin" ]; then sudo mkdir $(dst)/bin; fi
+	@if [ ! -d "$(dst)/bin" ]; then  mkdir $(dst)/bin; fi
 	@for file in $$( ls $U/_* ); do \
 		cp $$file $(dst)/bin/$${file#$U/_}; done
 	@cp $U/_init $(dst)/init
@@ -252,12 +256,11 @@ clean:
 	$U/usys.S \
 	sdcard.img\
 	#$(UPROGS)
+
 local:
 #build: kernel userprog
 	@make build platform=qemu
 	@make fs
 	@$(QEMU) $(QEMUOPTS)
-all: 
-	@make build platform=qemu
-test: $U/_init
-	@./runtest.sh
+
+
