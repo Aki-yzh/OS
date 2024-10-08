@@ -92,5 +92,4 @@ void            procdump(void);
 uint64          procnum(void);
 void            test_proc_init(int);
 
-
 #endif
