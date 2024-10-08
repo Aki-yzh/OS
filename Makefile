@@ -1,5 +1,5 @@
-platform	:= k210
-#platform	:= qemu
+#platform	:= k210
+platform	:= qemu
 # mode := debug
 mode := release
 K=kernel
@@ -129,7 +129,7 @@ ifndef CPUS
 CPUS := 2
 endif
 
-QEMUOPTS = -machine virt -kernel $T/kernel -m 32M -nographic
+QEMUOPTS = -machine virt -kernel $T/kernel -m 128M -nographic
 
 # use multi-core 
 QEMUOPTS += -smp $(CPUS)
@@ -148,7 +148,7 @@ ifeq ($(platform), k210)
 	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
 	@dd if=$(image) of=$(k210) bs=128k seek=1
 	@$(OBJDUMP) -D -b binary -m riscv $(k210) > $T/k210.asm
-	@sudo chmod 777 $(k210-serialport)
+	@chmod 777 $(k210-serialport)
 	@python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(k210)
 else
 	@$(QEMU) $(QEMUOPTS)
@@ -221,33 +221,45 @@ dst=/mnt
 # @sudo cp $U/_sh $(dst)/sh
 # Make fs image
 fs: $(UPROGS)
-	@if [ ! -f "fs.img" ]; then \
+	@if [ ! -f "sdcard.img" ]; then \
 		echo "making fs image..."; \
-		dd if=/dev/zero of=fs.img bs=512k count=512; \
-		mkfs.vfat -F 32 fs.img; fi
-	@ mount fs.img $(dst)
-	@if [ ! -d "$(dst)/bin" ]; then  mkdir $(dst)/bin; fi
-	@ cp README $(dst)/README
+		dd if=/dev/zero of=sdcard.img bs=1M count=128; \
+		mkfs.vfat -F 32 sdcard.img; fi
+	@mount sdcard.img $(dst)
+	@if [ ! -d "$(dst)/bin" ]; then mkdir $(dst)/bin; fi
+	@cp README $(dst)/README
 	@for file in $$( ls $U/_* ); do \
 		cp $$file $(dst)/$${file#$U/_};\
 		cp $$file $(dst)/bin/$${file#$U/_}; done
-	@ umount $(dst)
+	@cp -R tests/* $(dst)
+	@umount $(dst)
 
 # Write mounted sdcard
 sdcard: userprogs
 	@if [ ! -d "$(dst)/bin" ]; then sudo mkdir $(dst)/bin; fi
 	@for file in $$( ls $U/_* ); do \
-		sudo cp $$file $(dst)/bin/$${file#$U/_}; done
-	@sudo cp $U/_init $(dst)/init
-	@sudo cp $U/_sh $(dst)/sh
-	@sudo cp README $(dst)/README
+		cp $$file $(dst)/bin/$${file#$U/_}; done
+	@cp $U/_init $(dst)/init
+	@cp $U/_sh $(dst)/sh
+	@cp README $(dst)/README
+
 
 clean: 
-	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
+	rm -f kernel-qemu *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*/*.o */*.d */*.asm */*.sym \
 	$T/* \
 	$U/initcode $U/initcode.out \
 	$K/kernel \
 	.gdbinit \
 	$U/usys.S \
-	$(UPROGS)
+	sdcard.img\
+	#$(UPROGS)
+local:
+#build: kernel userprog
+	@make build platform=qemu
+	@make fs
+	@$(QEMU) $(QEMUOPTS)
+all: 
+	@make build platform=qemu
+test: $U/_init
+	@./runtest.sh

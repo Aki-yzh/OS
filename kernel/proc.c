@@ -238,76 +238,29 @@ proc_freepagetable(pagetable_t pagetable, uint64 sz)
 
 // a user program that calls exec("/init")
 // od -t xC initcode
-uchar initcode[] = {
-  0x17, 0x05, 0x00, 0x00, 0x13, 0x05, 0x45, 0x02,
-  0x97, 0x05, 0x00, 0x00, 0x93, 0x85, 0x35, 0x02,
-  0x93, 0x08, 0x70, 0x00, 0x73, 0x00, 0x00, 0x00,
-  0x93, 0x08, 0x20, 0x00, 0x73, 0x00, 0x00, 0x00,
-  0xef, 0xf0, 0x9f, 0xff, 0x2f, 0x69, 0x6e, 0x69,
-  0x74, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00
-};
-
-// uchar printhello[] = {
-//     0x13, 0x00, 0x00, 0x00,     // nop
-//     0x13, 0x00, 0x00, 0x00,     // nop 
-//     0x13, 0x00, 0x00, 0x00,     // nop 
-//     // <start>
-//     0x17, 0x05, 0x00, 0x00,     // auipc a0, 0x0 
-//     0x13, 0x05, 0x05, 0x00,     // mv a0, a0 
-//     0x93, 0x08, 0x60, 0x01,     // li a7, 22 
-//     0x73, 0x00, 0x00, 0x00,     // ecall 
-//     0xef, 0xf0, 0x1f, 0xff,     // jal ra, <start>
-//     // <loop>
-//     0xef, 0x00, 0x00, 0x00,     // jal ra, <loop>
-// };
-
-
-// void test_proc_init(int proc_num) {
-//   if(proc_num > NPROC) panic("test_proc_init\n");
-//   struct proc *p;
-//   for(int i = 0; i < proc_num; i++) {
-//     p = allocproc();
-//     uvminit(p->pagetable, (uchar*)printhello, sizeof(printhello));
-//     p->sz = PGSIZE;
-//     p->trapframe->epc = 0x0;
-//     p->trapframe->sp = PGSIZE;
-//     safestrcpy(p->name, "test_code", sizeof(p->name));
-//     p->state = RUNNABLE;
-//     release(&p->lock);
-//   }
-//   initproc = proc;
-//   printf("[test_proc]test_proc init done\n");
-// }
-
+uchar initcode[] = { 
+#include "include/initcode.h" 
+}; 
 // Set up first user process.
-void
-userinit(void)
-{
-  struct proc *p;
-
-  p = allocproc();
-  initproc = p;
-  
-  // allocate one user page and copy init's instructions
-  // and data into it.
-  uvminit(p->pagetable , p->kpagetable, initcode, sizeof(initcode));
-  p->sz = PGSIZE;
-
-  // prepare for the very first "return" from kernel to user.
-  p->trapframe->epc = 0x0;      // user program counter
-  p->trapframe->sp = PGSIZE;  // user stack pointer
-
-  safestrcpy(p->name, "initcode", sizeof(p->name));
-
-  p->state = RUNNABLE;
-
-  p->tmask = 0;
-
-  release(&p->lock);
-  #ifdef DEBUG
-  printf("userinit\n");
-  #endif
+void userinit(void) { 
+ struct proc *p; 
+ p = allocproc(); 
+ initproc = p; 
+ // allocate one user page and copy init's instructions 
+ // and data into it. 
+ uvminit(p->pagetable , p->kpagetable, initcode, sizeof(initcode)); 
+ p->sz = PGSIZE;
+ p->heapsize = 0; 
+ // prepare for the very first "return" from kernel to user. 
+ p->trapframe->epc = 0x0; // user program counter 
+ p->trapframe->sp = PGSIZE; // user stack pointer 
+ safestrcpy(p->name, "init", sizeof(p->name)); 
+ p->state = RUNNABLE; 
+ p->tmask = 0; 
+ release(&p->lock); 
+ #ifdef DEBUG 
+ printf("userinit\n"); 
+ #endif 
 }
 
 // Grow or shrink user memory by n bytes.
