@@ -259,7 +259,8 @@ local:
 	@make build platform=qemu
 	@make fs
 	@$(QEMU) $(QEMUOPTS)
-all: 
-	@make build platform=qemu
+all: build
+    mv $T/kernel $T/kernel-qemu
+    cp $T/kernel-qemu kernel-qemu
 test: $U/_init
 	@./runtest.sh
