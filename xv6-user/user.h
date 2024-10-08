@@ -51,3 +51,7 @@ void free(void*);
 int atoi(const char*);
 int memcmp(const void *, const void *, uint);
 void *memcpy(void *, const void *, uint);
+int shutdown(void);
+int getppid(void);
+uint64 clone(uint64 num);
+uint64 wait4(int, uint64);

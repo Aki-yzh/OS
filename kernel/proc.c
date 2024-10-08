@@ -744,7 +744,8 @@ procnum(void)
 
   return num;
 }
-int clone(uint64 stack) {
+
+uint64  clone(uint64 stack) {
   struct proc *p = myproc();
   struct proc *np = allocproc();
   if (np == NULL) {
@@ -778,7 +779,7 @@ int clone(uint64 stack) {
   return pid;
 }
 
-int
+uint64 
 wait4(int pid1, uint64 addr)
 {
   if (pid1 == -1) {
