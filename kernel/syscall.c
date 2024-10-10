@@ -104,7 +104,7 @@ extern uint64 sys_gettimeofday(void);
 extern uint64 sys_times(void);
 extern uint64 sys_kill(void);
 extern uint64 sys_mkdir(void);
-
+extern uint64 sys_mkdirat(void);
 extern uint64 sys_open(void);
 extern uint64 sys_pipe(void);
 extern uint64 sys_read(void);
@@ -149,6 +149,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_open]        sys_open,
   [SYS_write]       sys_write,
   [SYS_mkdir]       sys_mkdir,
+  [SYS_mkdirat]     sys_mkdirat,
   [SYS_close]       sys_close,
   [SYS_test_proc]   sys_test_proc,
   [SYS_dev]         sys_dev,
@@ -168,7 +169,7 @@ static uint64 (*syscalls[])(void) = {
 
   [SYS_clone]        sys_clone,
   [SYS_sched_yield]  sys_yield,
-  
+
   [SYS_nanosleep]    sys_nanosleep,
 };
 
@@ -190,6 +191,7 @@ static char *sysnames[] = {
   [SYS_open]        "open",
   [SYS_write]       "write",
   [SYS_mkdir]       "mkdir",
+  [SYS_mkdirat]     "mkdirat",
   [SYS_close]       "close",
   [SYS_test_proc]   "test_proc",
   [SYS_dev]         "dev",

@@ -236,21 +236,6 @@ sys_mkdir(void)
   return 0;
 }
 
-uint64
-sys_mkdirat(void)
-{
-  int dirfd,mode;
-  char path[FAT32_MAX_PATH];
-  struct dirent *ep;
-
-  if(argint(0,&dirfd) < 0 || argstr(1, path, FAT32_MAX_PATH) < 0 || 
-    argint(2,&mode) < 0 || (ep = create(path, T_DIR, mode)) == 0){
-    return -1;
-  }
-  eunlock(ep);
-  eput(ep);
-  return 0;
-}
 
 uint64
 sys_chdir(void)
@@ -524,4 +509,23 @@ fail:
   if (src)
     eput(src);
   return -1;
+}
+
+uint64
+sys_mkdirat(void)
+{
+  char path[FAT32_MAX_PATH];
+  struct dirent *ep;
+  int fd, mode;
+
+  if (argint(0, &fd) < 0 || argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &mode) < 0)
+    return -1;
+
+  ep = create(path, T_DIR, mode);
+  if (ep == NULL)
+    return -1;
+
+  eunlock(ep);
+  eput(ep);
+  return 0;
 }

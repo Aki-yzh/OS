@@ -282,7 +282,8 @@ sys_nanosleep(void)
 
 
 uint64
-sys_yield(void) {
+sys_yield(void){
+  myproc() -> trapframe -> a0 = 0;
   yield();
   return 0;
 }
