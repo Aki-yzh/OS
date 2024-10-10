@@ -541,11 +541,18 @@ sys_dup3(void)
     return -1;
   if (argint(1, &newfd) < 0)
     return -1;
-  if (myproc()->ofile[newfd] != NULL)
+
+  struct proc *p = myproc();
+  if (newfd < 0 || newfd >= NOFILE)
+    return -1;
+
+  struct file *oldf = p->ofile[newfd];
+  if (oldf != NULL)
   {
-    fileclose(myproc()->ofile[newfd]);
+    fileclose(oldf);
   }
-  myproc()->ofile[newfd] = f;
+
+  p->ofile[newfd] = f;
   filedup(f);
   return 0;
 }
