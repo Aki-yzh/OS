@@ -1,4 +1,3 @@
-
 #include "include/types.h"
 #include "include/riscv.h"
 #include "include/param.h"
@@ -12,6 +11,8 @@
 #include "include/printf.h"
 #include "include/sbi.h"
 #include "include/vm.h"
+
+
 extern int exec(char *path, char **argv);
 
 uint64
@@ -78,6 +79,9 @@ sys_fork(void)
   return fork();
 }
 
+
+
+
 uint64
 sys_wait(void)
 {
@@ -86,6 +90,7 @@ sys_wait(void)
     return -1;
   return wait(p);
 }
+
 
 uint64
 sys_sbrk(void)
