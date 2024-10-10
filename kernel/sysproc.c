@@ -220,3 +220,26 @@ uint64 sys_times(void) {
 
     return 0;
 }
+
+uint64
+sys_brk(void)
+{
+  uint64 new_addr;
+  int current_addr;
+  int increment;
+
+  if (argaddr(0, &new_addr) < 0)
+    return -1;
+
+  current_addr = myproc()->sz;
+
+  if (new_addr == 0) {
+    return current_addr;  
+  }
+
+  increment = (int)new_addr - current_addr;
+  if (growproc(increment) < 0)
+    return -1;
+
+  return 0;
+}
