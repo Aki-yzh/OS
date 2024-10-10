@@ -251,6 +251,37 @@ sys_brk(void)
 }
 
 uint64
+sys_nanosleep(void)
+{
+  uint64 addr;
+  uint64 sleep_ticks;
+  uint ticks0;
+
+  if (argaddr(0, &addr) < 0)
+    return -1;
+
+  sleep_ticks = *(uint64 *)addr;
+  acquire(&tickslock);
+  ticks0 = ticks;
+  while (ticks - ticks0 < sleep_ticks)
+  {
+    if (myproc()->killed)
+    {
+      release(&tickslock);
+      return -1;
+    }
+    sleep(&ticks, &tickslock);
+  }
+  release(&tickslock);
+  return 0;
+}
+
+
+
+
+
+
+uint64
 sys_yield(void) {
   yield();
   return 0;

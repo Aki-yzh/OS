@@ -36,9 +36,12 @@
 #define SYS_shutdown   210
 #define SYS_remove      117
 #define SYS_brk         214
+#define SYS_nanosleep   101
+
+
+
+
 #define SYS_sched_yield 124
-
-
 #define SYS_clone       220
 
 
