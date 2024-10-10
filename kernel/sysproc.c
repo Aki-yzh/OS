@@ -250,29 +250,31 @@ sys_brk(void)
   return 0;
 }
 
-uint64
-sys_nanosleep(void)
+uint64 sys_nanosleep(void)
 {
-  uint64 addr;
-  uint64 sleep_ticks;
-  uint ticks0;
+  uint64 addr, sec, usec;
+  struct timespec ts;
 
-  if (argaddr(0, &addr) < 0)
+  if (argaddr(0, &addr) < 0 || fetchaddr(addr, &sec) < 0 || fetchaddr(addr + sizeof(uint64), &usec) < 0) {
     return -1;
+  }
 
-  sleep_ticks = *(uint64 *)addr;
+  ts.tv_sec = sec;
+  ts.tv_nsec = usec * 1000;
+
   acquire(&tickslock);
-  ticks0 = ticks;
-  while (ticks - ticks0 < sleep_ticks)
-  {
-    if (myproc()->killed)
-    {
+  uint64 start_time = r_time();
+  uint64 end_time = start_time + ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+
+  while (r_time() < end_time) {
+    if (myproc()->killed) {
       release(&tickslock);
       return -1;
     }
     sleep(&ticks, &tickslock);
   }
   release(&tickslock);
+
   return 0;
 }
 
