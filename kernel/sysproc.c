@@ -80,17 +80,7 @@ sys_fork(void)
   return fork();
 }
 
-uint64
-sys_clone(void) {
-  int flags;
-  if (argint(0, &flags) < 0) {
-    return -1;
-  }
-  if (flags == SIGCHLD) {
-    return fork();
-  }
-  return -1;
-}
+
 
 
 uint64
@@ -258,4 +248,22 @@ sys_brk(void)
     return -1;
 
   return 0;
+}
+
+uint64
+sys_yield(void) {
+  yield();
+  return 0;
+}
+
+uint64
+sys_clone(void) {
+  int flags;
+  if (argint(0, &flags) < 0) {
+    return -1;
+  }
+  if (flags == SIGCHLD) {
+    return fork();
+  }
+  return -1;
 }
