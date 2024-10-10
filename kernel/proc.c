@@ -452,6 +452,7 @@ waitpid(uint64 addr, int waiting_pid)
             release(&p->lock);
             return -1;
           }
+          // printf("waiting_pid: %d, pid: %d, wstatus: %d\n", waiting_pid, pid, *((int *) addr));
           freeproc(np);
           release(&np->lock);
           release(&p->lock);
@@ -471,10 +472,12 @@ waitpid(uint64 addr, int waiting_pid)
     sleep(p, &p->lock);  //DOC: wait-sleep
   }
 }
+
 int
 wait(uint64 addr) {
   return waitpid(addr, -1);
 }
+
 
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
