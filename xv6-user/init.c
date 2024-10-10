@@ -25,31 +25,31 @@ char *argv[] = {0};
 // 这⾥放置了⽀持的系统调⽤
 char *tests[] = {
  "exit",
-  "getpid",//done
-  "getppid",      //done
-  "gettimeofday", //done
-  "uname", //done
-  "times", //done
-  "brk", //done
+  "getpid",
+  "getppid",       
+  "gettimeofday",
+  "uname",
+  "times",
+  "brk",
   "clone",
   "fork",
   "wait",
   "waitpid",
-  "mmap",  // 2/3
-  "munmap",// 2/4
-  "execve", //done
-  "close", //done
+  "mmap",
+  "munmap",
+  "execve",
+  "close",
   "dup2",
-  "dup",    //done        
+  "dup",            
   "pipe",
-  "read",//done
-  "write",   //done       
-  "openat", //done
-  "open",  //done
-  "fstat", //done
+  "read",
+  "write",          
+  "openat",
+  "open",
+  "fstat",
   "getdents",
   "chdir",
-  "getcwd", //done
+  "getcwd",
   "mkdir",
   "unlink",
   "mount",
