@@ -12,6 +12,7 @@
 #include "include/sbi.h"
 #include "include/vm.h"
 
+#define SIGCHLD 17
 
 extern int exec(char *path, char **argv);
 
@@ -79,7 +80,17 @@ sys_fork(void)
   return fork();
 }
 
-
+uint64
+sys_clone(void) {
+  int flags;
+  if (argint(0, &flags) < 0) {
+    return -1;
+  }
+  if (flags == SIGCHLD) {
+    return fork();
+  }
+  return -1;
+}
 
 
 uint64

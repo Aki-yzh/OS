@@ -124,7 +124,7 @@ extern uint64 sys_rename(void);
 extern uint64 sys_uname(void);
 extern uint64 sys_shutdown(void);
 extern uint64 sys_brk(void);
-
+extern uint64 sys_clone(void);
 
 
 
@@ -161,7 +161,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_uname]       sys_uname,
   [SYS_shutdown]    sys_shutdown,
   [SYS_brk]         sys_brk,
-
+  [SYS_clone]        sys_clone,
 
 
 };
@@ -199,7 +199,7 @@ static char *sysnames[] = {
   [SYS_uname]       "uname",
   [SYS_shutdown]    "shutdown",
   [SYS_brk]            "brk",
-
+  [SYS_clone]          "clone",
 
 
 };
