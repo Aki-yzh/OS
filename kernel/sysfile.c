@@ -529,3 +529,22 @@ sys_mkdirat(void)
   eput(ep);
   return 0;
 }
+
+
+uint64
+sys_dup3(void)
+{
+  struct proc *p = myproc();
+  int fd1;
+  int fd2;
+  struct file* f;
+  if(argint(0,&fd1) < 0||argint(1,&fd2)<0){
+    return -1;}
+  if(p->ofile[fd1]  && fd2 < NOFILE){
+      f=p->ofile[fd1];
+      p->ofile[fd2] = f; 
+      filedup(f);
+      return fd2;
+    }
+  return -1;
+}

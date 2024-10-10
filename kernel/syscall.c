@@ -125,7 +125,7 @@ extern uint64 sys_uname(void);
 extern uint64 sys_shutdown(void);
 extern uint64 sys_brk(void);
 extern uint64 sys_nanosleep(void);
-
+extern uint64 sys_dup3(void);
 
 extern uint64 sys_clone(void);
 extern uint64 sys_yield(void);
@@ -165,7 +165,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_uname]       sys_uname,
   [SYS_shutdown]    sys_shutdown,
   [SYS_brk]         sys_brk,
-
+  [SYS_dup3]        sys_dup3,
 
   [SYS_clone]        sys_clone,
   [SYS_sched_yield]  sys_yield,
@@ -208,7 +208,7 @@ static char *sysnames[] = {
   [SYS_shutdown]    "shutdown",
   [SYS_brk]            "brk",
   [SYS_nanosleep]   "nanosleep",
-
+   [SYS_dup3]       "dup3",
 
 
   [SYS_sched_yield]   "yield",
