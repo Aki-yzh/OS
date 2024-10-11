@@ -287,13 +287,30 @@ sys_yield(void){
 }
 
 uint64
-sys_clone(void) {
-  int flags;
-  if (argint(0, &flags) < 0) {
+sys_clone(void)
+{
+  int stack;
+  if (argint(1, &stack) < 0)
     return -1;
-  }
-  if (flags == SIGCHLD) {
+  if (stack == 0)
+  {
     return fork();
   }
-  return -1;
+  else
+  {
+    return clone(stack);
+  }
+}
+
+
+uint64
+sys_waitpid(void)
+{
+  int pid;
+  uint64 code;
+  if (argint(0, &pid) < 0)
+    return -1;
+  if (argaddr(1, &code) < 0)
+    return -1;
+  return wait4(pid, code);
 }

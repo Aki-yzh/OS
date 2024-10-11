@@ -38,7 +38,7 @@
 #define SYS_brk         214
 #define SYS_nanosleep   101
 
-
+#define SYS_wait4 260
 
 
 #define SYS_sched_yield 124

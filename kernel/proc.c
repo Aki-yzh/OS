@@ -749,3 +749,95 @@ procnum(void)
   return num;
 }
 
+int wait4(int pid, uint64 addr)
+{
+  if (pid == -1)
+    return wait(addr);
+  struct proc *np;
+  int havekids;
+  struct proc *p = myproc();
+  acquire(&p->lock);
+  for (;;)
+  {
+    havekids = 0;
+    for (np = proc; np < &proc[NPROC]; np++)
+    {
+
+      if (np->pid == pid && np->parent == p)
+      {
+        acquire(&np->lock);
+        havekids = 1;
+        if (np->state == ZOMBIE)
+        {
+          if (addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0)
+          {
+            release(&np->lock);
+            release(&p->lock);
+            return -1;
+          }
+          *(int *)addr = *(int *)addr << 8;
+          freeproc(np);
+          release(&np->lock);
+          release(&p->lock);
+          return pid;
+        }
+        release(&np->lock);
+      }
+    }
+    if (!havekids || p->killed)
+    {
+      release(&p->lock);
+      return -1;
+    }
+    sleep(p, &p->lock); 
+  }
+}
+
+int clone(uint64 stack)
+{
+  int i, pid;
+  struct proc *np;
+  struct proc *p = myproc();
+  if ((np = allocproc()) == NULL)
+  {
+    return -1;
+  }
+  if (uvmcopy(p->pagetable, np->pagetable, np->kpagetable, p->sz) < 0)
+  {
+    freeproc(np);
+    release(&np->lock);
+    return -1;
+  }
+
+  np->sz = p->sz;
+
+  np->parent = p;
+
+  // copy tracing mask from parent.
+  np->tmask = p->tmask;
+
+  // copy saved user registers.
+  *(np->trapframe) = *(p->trapframe);
+
+  // Cause fork to return 0 in the child.
+  np->trapframe->a0 = 0;
+  np->trapframe->sp = stack;
+
+  // increment reference counts on open file descriptors.
+  for (i = 0; i < NOFILE; i++)
+    if (p->ofile[i])
+      np->ofile[i] = filedup(p->ofile[i]);
+  np->cwd = edup(p->cwd);
+
+  safestrcpy(np->name, p->name, sizeof(p->name));
+
+  pid = np->pid;
+
+  np->state = RUNNABLE;
+
+  release(&np->lock);
+
+  return pid;
+}
+
+
