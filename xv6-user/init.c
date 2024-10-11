@@ -24,38 +24,38 @@ static inline long __syscall0(long n)
 char *argv[] = {0};
 // 这⾥放置了⽀持的系统调⽤
 char *tests[] = {
- "exit",
-  "getpid",
-  "getppid",       
-  "gettimeofday",
-  "uname",
-  "times",
-  "brk",
+  "exit",  //1/2
+  "getpid",   //done
+  "getppid",     //done    
+  "gettimeofday", //done
+  "uname",     //done    
+  "times",    //done
+  "brk",    //done
   "clone",
-  "fork",
+  "fork",   //2/3
   "wait",
   "waitpid",
-  "mmap",
-  "munmap",
-  "execve",
-  "close",
+  "mmap",    //2/3
+  "munmap",   //2/4
+  "execve",   //done
+  "close",    //done
   "dup2",
-  "dup",            
+  "dup",     //done       
   "pipe",
-  "read",
-  "write",          
-  "openat",
-  "open",
-  "fstat",
+  "read",   //done
+  "write",    //done      
+  "openat",  //done
+  "open",   //done
+  "fstat",   //done
   "getdents",
-  "chdir",
-  "getcwd",
-  "mkdir",
+  "chdir",   //done
+  "getcwd",  //done
+  "mkdir",  //done
   "unlink",
   "mount",
   "unmount",
-  "mkdir_",
-  "sleep",
+  "mkdir_",  //done
+  "sleep",   //done
   "yield",
 };
 
