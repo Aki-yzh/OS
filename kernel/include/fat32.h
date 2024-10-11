@@ -49,14 +49,6 @@ struct dirent {
     struct dirent *prev;
     struct sleeplock    lock;
 };
-struct linux_dirent64
-{
-    uint64 d_ino;
-    long long d_off;
-    unsigned short d_reclen;
-    unsigned char d_type;
-    char d_name[];
-};
 
 
 int             fat32_init(void);

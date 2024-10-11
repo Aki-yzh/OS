@@ -21,7 +21,6 @@
 #define SYS_uptime      14
 #define SYS_open        56
 #define SYS_write       64
-#define SYS_dup3        24
 #define SYS_trace       18
 #define SYS_sysinfo     19
 #define SYS_mkdir        7
@@ -41,6 +40,6 @@
 #define SYS_wait4 260
 #define SYS_sched_yield 124
 #define SYS_clone       220
-#define SYS_getdents64 61
+
 
 #endif

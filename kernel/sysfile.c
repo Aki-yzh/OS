@@ -531,23 +531,7 @@ sys_mkdirat(void)
 }
 
 
-uint64
-sys_dup3(void)
-{
-  struct proc *p = myproc();
-  int fd1;
-  int fd2;
-  struct file* f;
-  if(argint(0,&fd1) < 0||argint(1,&fd2)<0){
-    return -1;}
-  if(p->ofile[fd1]  && fd2 < NOFILE){
-      f=p->ofile[fd1];
-      p->ofile[fd2] = f; 
-      filedup(f);
-      return fd2;
-    }
-  return -1;
-}
+
 
 uint64
 sys_unlinkat(void)
@@ -590,16 +574,3 @@ sys_unlinkat(void)
 }
 
 
-uint64
-sys_getdents(void)
-{
-  uint64 addr, len;
-  struct file *fl;
-  if (argfd(0, 0, &fl) < 0 || argaddr(1, &addr) < 0 || argaddr(2, &len))
-    return -1;
-  struct linux_dirent64 *address = (struct linux_dirent64 *)addr;
-  struct dirent *ep = fl->ep;
-  safestrcpy(address->d_name, ep->filename, FAT32_MAX_FILENAME + 1);
-  address->d_off = ep->off;
-  return 0;
-}
