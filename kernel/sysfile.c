@@ -513,13 +513,12 @@ uint64
 sys_mkdirat(void)
 {
   char path[FAT32_MAX_PATH];
-  struct dirent *ep;
   int fd, mode;
 
   if (argint(0, &fd) < 0 || argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &mode) < 0)
     return -1;
 
-  ep = create(path, T_DIR, mode);
+  struct dirent *ep = create(path, T_DIR, mode);
   if (ep == NULL)
     return -1;
 
@@ -528,14 +527,10 @@ sys_mkdirat(void)
   return 0;
 }
 
-
-
-
 uint64
 sys_unlinkat(void)
 {
   char path[FAT32_MAX_PATH];
-  struct dirent *entry;
   int path_len;
 
   if ((path_len = argstr(1, path, FAT32_MAX_PATH)) <= 0)
@@ -543,18 +538,15 @@ sys_unlinkat(void)
 
   char *end = path + path_len - 1;
   while (end >= path && *end == '/')
-  {
     end--;
-  }
-  if (end >= path && *end == '.' && (end == path || *--end == '/'))
-  {
-    return -1;
-  }
 
-  if ((entry = ename(path)) == NULL)
-  {
+  if (end >= path && *end == '.' && (end == path || *--end == '/'))
     return -1;
-  }
+
+  struct dirent *entry = ename(path);
+  if (entry == NULL)
+    return -1;
+
   elock(entry);
   if ((entry->attribute & ATTR_DIRECTORY) && !isdirempty(entry))
   {
@@ -562,7 +554,8 @@ sys_unlinkat(void)
     eput(entry);
     return -1;
   }
-  elock(entry->parent); 
+
+  elock(entry->parent);
   eremove(entry);
   eunlock(entry->parent);
   eunlock(entry);
@@ -570,5 +563,3 @@ sys_unlinkat(void)
 
   return 0;
 }
-
-

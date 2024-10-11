@@ -211,23 +211,23 @@ sys_uname(void){
 }
 // System call to get process times
 uint64 sys_times(void) {
-    uint64 addr;
-    struct tms tm;
-    uint tick_counter;
+  uint64 addr;
+  struct tms tm;
+  uint tick_counter;
 
-    if (argaddr(0, &addr) < 0)
-        return -1;
+  if (argaddr(0, &addr) < 0)
+    return -1;
 
-    tick_counter = r_time();
-    tm.tms_utime = tick_counter / 1000000;
-    tm.tms_stime = tick_counter / 1000000;
-    tm.tms_cutime = tick_counter / 1000000;
-    tm.tms_cstime = tick_counter / 1000000;
+  tick_counter = r_time();
+  tm.tms_utime = tick_counter / 1000000;
+  tm.tms_stime = tick_counter / 1000000;
+  tm.tms_cutime = tick_counter / 1000000;
+  tm.tms_cstime = tick_counter / 1000000;
 
-    if (copyout2(addr, (char *)&tm, sizeof(tm)) < 0)
-        return -1;
+  if (copyout2(addr, (char *)&tm, sizeof(tm)) < 0)
+    return -1;
 
-    return 0;
+  return 0;
 }
 
 uint64
