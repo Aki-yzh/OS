@@ -534,25 +534,17 @@ sys_mkdirat(void)
 uint64
 sys_dup3(void)
 {
-  struct file *f;
-  int newfd;
-
-  if (argfd(0, 0, &f) < 0)
-    return -1;
-  if (argint(1, &newfd) < 0)
-    return -1;
-
   struct proc *p = myproc();
-  if (newfd < 0 || newfd >= NOFILE)
-    return -1;
-
-  struct file *oldf = p->ofile[newfd];
-  if (oldf != NULL)
-  {
-    fileclose(oldf);
-  }
-
-  p->ofile[newfd] = f;
-  filedup(f);
-  return 0;
+  int fd1;
+  int fd2;
+  struct file* f;
+  if(argint(0,&fd1) < 0||argint(1,&fd2)<0){
+    return -1;}
+  if(p->ofile[fd1]  && fd2 < NOFILE){
+      f=p->ofile[fd1];
+      p->ofile[fd2] = f; 
+      filedup(f);
+      return fd2;
+    }
+  return -1;
 }
