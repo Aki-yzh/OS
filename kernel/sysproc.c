@@ -65,14 +65,17 @@ sys_exit(void)
   if(argint(0, &n) < 0)
     return -1;
   exit(n);
-  return 0;  // not reached
+  return 0; 
 }
+
 
 uint64
 sys_getpid(void)
 {
   return myproc()->pid;
 }
+
+
 
 uint64
 sys_fork(void)

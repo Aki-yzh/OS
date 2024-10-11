@@ -88,7 +88,6 @@ sys_read(void)
   struct file *f;
   int n;
   uint64 p;
-
   if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
     return -1;
   return fileread(f, p, n);
@@ -227,7 +226,6 @@ sys_mkdir(void)
 {
   char path[FAT32_MAX_PATH];
   struct dirent *ep;
-
   if(argstr(0, path, FAT32_MAX_PATH) < 0 || (ep = create(path, T_DIR, 0)) == 0){
     return -1;
   }
