@@ -753,20 +753,24 @@ int wait4(int pid, uint64 addr)
 {
   if (pid == -1)
     return wait(addr);
+
   struct proc *np;
   int havekids;
   struct proc *p = myproc();
+
   acquire(&p->lock);
-  for (;;)
+
+  while (1)
   {
     havekids = 0;
+
     for (np = proc; np < &proc[NPROC]; np++)
     {
-
       if (np->pid == pid && np->parent == p)
       {
         acquire(&np->lock);
         havekids = 1;
+
         if (np->state == ZOMBIE)
         {
           if (addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0)
@@ -775,21 +779,25 @@ int wait4(int pid, uint64 addr)
             release(&p->lock);
             return -1;
           }
+
           *(int *)addr = *(int *)addr << 8;
           freeproc(np);
           release(&np->lock);
           release(&p->lock);
           return pid;
         }
+
         release(&np->lock);
       }
     }
+
     if (!havekids || p->killed)
     {
       release(&p->lock);
       return -1;
     }
-    sleep(p, &p->lock); 
+
+    sleep(p, &p->lock);
   }
 }
 
