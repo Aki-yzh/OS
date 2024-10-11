@@ -580,11 +580,26 @@ sys_unlinkat(void)
     eput(entry);
     return -1;
   }
-  elock(entry->parent); // Potential deadlock?
+  elock(entry->parent); 
   eremove(entry);
   eunlock(entry->parent);
   eunlock(entry);
   eput(entry);
 
+  return 0;
+}
+
+
+uint64
+sys_getdents(void)
+{
+  uint64 addr, len;
+  struct file *fl;
+  if (argfd(0, 0, &fl) < 0 || argaddr(1, &addr) < 0 || argaddr(2, &len))
+    return -1;
+  struct linux_dirent64 *address = (struct linux_dirent64 *)addr;
+  struct dirent *ep = fl->ep;
+  safestrcpy(address->d_name, ep->filename, FAT32_MAX_FILENAME + 1);
+  address->d_off = ep->off;
   return 0;
 }
