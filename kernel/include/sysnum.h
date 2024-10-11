@@ -5,7 +5,7 @@
 #define SYS_fork         1
 #define SYS_exit        93
 #define SYS_wait         3
-#define SYS_pipe         4
+#define SYS_pipe        59
 #define SYS_read        63
 #define SYS_kill         6
 #define SYS_exec       221
@@ -37,10 +37,8 @@
 #define SYS_remove      117
 #define SYS_brk         214
 #define SYS_nanosleep   101
-
+#define SYS_unlinkat 35
 #define SYS_wait4 260
-
-
 #define SYS_sched_yield 124
 #define SYS_clone       220
 

@@ -128,7 +128,7 @@ extern uint64 sys_nanosleep(void);
 extern uint64 sys_dup3(void);
 
 extern uint64 sys_waitpid(void);
-
+extern uint64 sys_unlinkat(void);
 extern uint64 sys_clone(void);
 extern uint64 sys_yield(void);
 
@@ -169,7 +169,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_brk]         sys_brk,
   [SYS_dup3]        sys_dup3,
   [SYS_nanosleep]    sys_nanosleep,
-
+  [SYS_unlinkat] sys_unlinkat,
    [SYS_wait4] sys_waitpid,
 
   [SYS_clone]        sys_clone,
@@ -215,7 +215,7 @@ static char *sysnames[] = {
   [SYS_nanosleep]   "nanosleep",
   [SYS_dup3]       "dup3",
   [SYS_wait4]      "wait4",
-
+  [SYS_unlinkat] "unlinkat",
   [SYS_sched_yield]   "yield",
   [SYS_clone]          "clone",
 

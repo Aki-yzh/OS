@@ -548,3 +548,43 @@ sys_dup3(void)
     }
   return -1;
 }
+
+uint64
+sys_unlinkat(void)
+{
+  char path[FAT32_MAX_PATH];
+  struct dirent *entry;
+  int path_len;
+
+  if ((path_len = argstr(1, path, FAT32_MAX_PATH)) <= 0)
+    return -1;
+
+  char *end = path + path_len - 1;
+  while (end >= path && *end == '/')
+  {
+    end--;
+  }
+  if (end >= path && *end == '.' && (end == path || *--end == '/'))
+  {
+    return -1;
+  }
+
+  if ((entry = ename(path)) == NULL)
+  {
+    return -1;
+  }
+  elock(entry);
+  if ((entry->attribute & ATTR_DIRECTORY) && !isdirempty(entry))
+  {
+    eunlock(entry);
+    eput(entry);
+    return -1;
+  }
+  elock(entry->parent); // Potential deadlock?
+  eremove(entry);
+  eunlock(entry->parent);
+  eunlock(entry);
+  eput(entry);
+
+  return 0;
+}
