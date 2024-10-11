@@ -800,52 +800,51 @@ int wait4(int pid, uint64 addr)
     sleep(p, &p->lock);
   }
 }
-
 int clone(uint64 stack)
 {
-  int i, pid;
   struct proc *np;
   struct proc *p = myproc();
+
+  // Allocate process.
   if ((np = allocproc()) == NULL)
-  {
     return -1;
-  }
-  if (uvmcopy(p->pagetable, np->pagetable, np->kpagetable, p->sz) < 0)
-  {
+
+  // Copy user memory from parent to child.
+  if (uvmcopy(p->pagetable, np->pagetable, np->kpagetable, p->sz) < 0) {
     freeproc(np);
     release(&np->lock);
     return -1;
   }
 
   np->sz = p->sz;
-
   np->parent = p;
 
-  // copy tracing mask from parent.
+  // Copy tracing mask from parent.
   np->tmask = p->tmask;
 
-  // copy saved user registers.
+  // Copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
   // Cause fork to return 0 in the child.
   np->trapframe->a0 = 0;
   np->trapframe->sp = stack;
 
-  // increment reference counts on open file descriptors.
-  for (i = 0; i < NOFILE; i++)
+  // Increment reference counts on open file descriptors.
+  for (int i = 0; i < NOFILE; i++) {
     if (p->ofile[i])
       np->ofile[i] = filedup(p->ofile[i]);
+  }
   np->cwd = edup(p->cwd);
 
   safestrcpy(np->name, p->name, sizeof(p->name));
 
-  pid = np->pid;
-
+  int pid = np->pid;
   np->state = RUNNABLE;
 
   release(&np->lock);
 
   return pid;
 }
+
 
 
