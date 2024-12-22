@@ -337,46 +337,60 @@ sys_readdir(void)
   return dirnext(f, p);
 }
 
-// get absolute cwd string
-uint64
-sys_getcwd(void)
-{
-  uint64 addr;
-  int size;
-  if (argaddr(0, &addr) < 0 || argint(1,&size) < 0)
-    return -1;
 
-  struct dirent *de = myproc()->cwd;
-  char path[FAT32_MAX_PATH];
-  char *s;
-  int len;
-
-  if (de->parent == NULL) {
-    s = "/";
-  } else {
-    s = path + FAT32_MAX_PATH - 1;
+// 辅助函数：构建当前工作目录的路径
+static int build_cwd_path(struct dirent *de, char *path, int size) {
+    char *s = path + size - 1;
     *s = '\0';
-    while (de->parent) {
-      len = strlen(de->filename);
-      s -= len;
-      if (s <= path)          // can't reach root "/"
-        return -1;
-      strncpy(s, de->filename, len);
-      *--s = '/';
-      de = de->parent;
+
+    if (de->parent == NULL) {
+        s--;
+        *s = '/';
+    } else {
+        while (de->parent) {
+            int len = strlen(de->filename);
+            s -= len;
+            if (s < path)
+                return -1; // 路径长度超出限制
+            strncpy(s, de->filename, len);
+            s--;
+            if (s < path)
+                return -1;
+            *s = '/';
+            de = de->parent;
+        }
     }
-  }
 
+    // 将路径移动到字符串开头
+    int path_len = strlen(s);
+    memmove(path, s, path_len + 1);
+    return 0;
+}
 
-  // if (copyout(myproc()->pagetable, addr, s, strlen(s) + 1) < 0)
-  if (addr == NULL)          
-    return NULL;
-  if (strlen(s) > size)      
-    s[size] = '\0';           
-  if (copyout2(addr, s, strlen(s) + 1) < 0)
-    return NULL;
-  return addr;
+// 系统调用：获取当前工作目录
+uint64 sys_getcwd(void) {
+    uint64 addr;
+    int size;
+    if (argaddr(0, &addr) < 0 || argint(1, &size) < 0)
+        return -1;
 
+    struct dirent *de = myproc()->cwd;
+    char path[FAT32_MAX_PATH];
+
+    if (build_cwd_path(de, path, sizeof(path)) < 0)
+        return -1;
+
+    // 检查缓冲区大小
+    int path_length = strlen(path) + 1;
+    if (path_length > size) {
+        path[size - 1] = '\0';
+    }
+
+    // 复制路径到用户空间
+    if (copyout2(addr, path, strlen(path) + 1) < 0)
+        return -1;
+
+    return addr;
 }
 
 // Is the directory dp empty except for "." and ".." ?

@@ -749,65 +749,56 @@ procnum(void)
   return num;
 }
 
-// 辅助函数：查找僵尸状态的子进程
-static struct proc* get_zombie_child(struct proc *parent, int target_pid) {
-    struct proc *p;
-    for (p = proc; p < &proc[NPROC]; p++) {
-        if (p->parent == parent && p->pid == target_pid) {
-            acquire(&p->lock);
-            if (p->state == ZOMBIE) {
-                return p;
-            }
-            release(&p->lock);
-        }
-    }
-    return NULL;
-}
-
-// 系统调用：等待特定或任意子进程结束
 int wait4(int pid, uint64 addr)
 {
-    if (pid == -1)
-        return wait(addr);
+  if (pid == -1)
+    return wait(addr);
 
-    struct proc *current = myproc();
-    acquire(&current->lock);
+  struct proc *np;
+  int havekids;
+  struct proc *p = myproc();
 
-    while (1)
+  acquire(&p->lock);
+
+  while (1)
+  {
+    havekids = 0;
+
+    for (np = proc; np < &proc[NPROC]; np++)
     {
-        struct proc *zombie = get_zombie_child(current, pid);
-        if (zombie) {
-            if (addr != 0) {
-                if (copyout2(addr, (char *)&zombie->xstate, sizeof(zombie->xstate)) < 0) {
-                    release(&zombie->lock);
-                    release(&current->lock);
-                    return -1;
-                }
-                *(int *)addr <<= 8;
-            }
-            freeproc(zombie);
-            release(&zombie->lock);
-            release(&current->lock);
-            return zombie->pid;
-        }
+      if (np->pid == pid && np->parent == p)
+      {
+        acquire(&np->lock);
+        havekids = 1;
 
-        // 检查是否有子进程
-        int has_children = 0;
-        struct proc *p;
-        for (p = proc; p < &proc[NPROC]; p++) {
-            if (p->parent == current) {
-                has_children = 1;
-                break;
-            }
-        }
-
-        if (!has_children || current->killed) {
-            release(&current->lock);
+        if (np->state == ZOMBIE)
+        {
+          if (addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0)
+          {
+            release(&np->lock);
+            release(&p->lock);
             return -1;
+          }
+
+          *(int *)addr = *(int *)addr << 8;
+          freeproc(np);
+          release(&np->lock);
+          release(&p->lock);
+          return pid;
         }
 
-        sleep(current, &current->lock);
+        release(&np->lock);
+      }
     }
+
+    if (!havekids || p->killed)
+    {
+      release(&p->lock);
+      return -1;
+    }
+
+    sleep(p, &p->lock);
+  }
 }
 
 // 创建子进程的克隆
