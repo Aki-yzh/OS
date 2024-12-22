@@ -523,57 +523,94 @@ fail:
   return -1;
 }
 
-uint64
-sys_mkdirat(void)
-{
-  char path[FAT32_MAX_PATH];
-  int fd, mode;
 
-  if (argint(0, &fd) < 0 || argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &mode) < 0)
-    return -1;
+// 辅助函数：移除路径末尾的多余斜杠
+static int trim_trailing_slashes(char *path, int length) {
+    int i = length - 1;
+    while (i >= 0 && path[i] == '/') {
+        path[i] = '\0';
+        i--;
+    }
 
-  struct dirent *ep = create(path, T_DIR, mode);
-  if (ep == NULL)
-    return -1;
+    // 防止路径为"."或"./"的情况
+    if ((i == 0 && path[i] == '.') ||
+        (i > 0 && path[i] == '.' && path[i - 1] == '/')) {
+        return -1;
+    }
 
-  eunlock(ep);
-  eput(ep);
-  return 0;
+    return 0;
 }
 
-uint64
-sys_unlinkat(void)
-{
-  char path[FAT32_MAX_PATH];
-  int path_len;
+// 辅助函数：创建目录项并处理后续操作
+static int handle_create(const char *path, int type, int mode) {
+    char path_copy[FAT32_MAX_PATH];
+    strncpy(path_copy, path, FAT32_MAX_PATH - 1);
+    path_copy[FAT32_MAX_PATH - 1] = '\0'; // 确保字符串结尾
 
-  if ((path_len = argstr(1, path, FAT32_MAX_PATH)) <= 0)
-    return -1;
+    struct dirent *entry = create(path_copy, type, mode);
+    if (entry == NULL)
+        return -1;
 
-  char *end = path + path_len - 1;
-  while (end >= path && *end == '/')
-    end--;
-
-  if (end >= path && *end == '.' && (end == path || *--end == '/'))
-    return -1;
-
-  struct dirent *entry = ename(path);
-  if (entry == NULL)
-    return -1;
-
-  elock(entry);
-  if ((entry->attribute & ATTR_DIRECTORY) && !isdirempty(entry))
-  {
     eunlock(entry);
     eput(entry);
-    return -1;
-  }
+    return 0;
+}
 
-  elock(entry->parent);
-  eremove(entry);
-  eunlock(entry->parent);
-  eunlock(entry);
-  eput(entry);
+// 辅助函数：删除目录项并处理条件
+static int handle_remove(struct dirent *entry) {
+    if ((entry->attribute & ATTR_DIRECTORY) && !isdirempty(entry)) {
+        eunlock(entry);
+        eput(entry);
+        return -1;
+    }
 
-  return 0;
+    elock(entry->parent);
+    eremove(entry);
+    eunlock(entry->parent);
+    eunlock(entry);
+    eput(entry);
+
+    return 0;
+}
+
+// 系统调用：创建指定位置的目录
+uint64 sys_mkdirat(void) {
+    char path_buffer[FAT32_MAX_PATH];
+    int fd, permissions;
+
+    // 获取系统调用参数
+    if (argint(0, &fd) < 0 || argstr(1, path_buffer, FAT32_MAX_PATH) < 0 || argint(2, &permissions) < 0)
+        return -1;
+
+    // 创建目录并处理
+    if (handle_create(path_buffer, T_DIR, permissions) < 0)
+        return -1;
+
+    return 0;
+}
+// 系统调用：删除指定位置的文件或目录
+uint64 sys_unlinkat(void) {
+    char target_path[FAT32_MAX_PATH];
+    int path_length;
+
+    // 获取路径参数并验证
+    if ((path_length = argstr(1, target_path, FAT32_MAX_PATH)) <= 0)
+        return -1;
+
+    // 移除路径末尾的斜杠并进行验证
+    if (trim_trailing_slashes(target_path, path_length) < 0)
+        return -1;
+
+    // 查找目录项
+    struct dirent *entry = ename(target_path);
+    if (entry == NULL)
+        return -1;
+
+    elock(entry);
+
+    // 删除目录项并处理条件
+    if (handle_remove(entry) < 0)
+        return -1;
+
+    return 0;
 }
