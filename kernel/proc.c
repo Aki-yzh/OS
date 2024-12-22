@@ -749,122 +749,104 @@ procnum(void)
   return num;
 }
 
-// Helper function to find a child process by PID
-struct proc* find_child(struct proc *parent, int pid, int *found) {
-    struct proc *np;
+int wait4(int pid, uint64 addr)
+{
+  if (pid == -1)
+    return wait(addr);
 
-    for (np = proc; np < &proc[NPROC]; np++) {
-        if (np->pid == pid && np->parent == parent) {
-            acquire(&np->lock);
-            *found = 1;
+  struct proc *np;
+  int havekids;
+  struct proc *p = myproc();
 
-            if (np->state == ZOMBIE) {
-                *found = 2; // Indicates zombie state
-                return np;
-            }
+  acquire(&p->lock);
 
+  while (1)
+  {
+    havekids = 0;
+
+    for (np = proc; np < &proc[NPROC]; np++)
+    {
+      if (np->pid == pid && np->parent == p)
+      {
+        acquire(&np->lock);
+        havekids = 1;
+
+        if (np->state == ZOMBIE)
+        {
+          if (addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0)
+          {
             release(&np->lock);
-        }
-    }
-
-    return NULL;
-}
-
-// Helper function to copy exit status
-int copy_exit_status(uint64 addr, struct proc *np) {
-    if (addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
-        return -1;
-    }
-    *(int *)addr = *(int *)addr << 8;
-    return 0;
-}
-
-// System call to wait for a specific or any child process
-int wait4(int pid, uint64 addr) {
-    struct proc *np;
-    int havekids;
-    struct proc *p = myproc();
-
-    acquire(&p->lock);
-
-    while (1) {
-        havekids = 0;
-
-        np = find_child(p, pid, &havekids);
-        if (np) {
-            if (havekids == 2) { // Zombie
-                if (copy_exit_status(addr, np) < 0) {
-                    release(&np->lock);
-                    release(&p->lock);
-                    return -1;
-                }
-
-                freeproc(np);
-                release(&np->lock);
-                release(&p->lock);
-                return pid;
-            }
-            // If not zombie, continue searching
-        }
-
-        if (!havekids || p->killed) {
             release(&p->lock);
             return -1;
+          }
+
+          *(int *)addr = *(int *)addr << 8;
+          freeproc(np);
+          release(&np->lock);
+          release(&p->lock);
+          return pid;
         }
 
-        sleep(p, &p->lock);
-    }
-}
-
-// Helper function to duplicate file descriptors
-void duplicate_fds(struct proc *parent, struct proc *child) {
-    for (int i = 0; i < NOFILE; i++) {
-        if (parent->ofile[i]) {
-            child->ofile[i] = filedup(parent->ofile[i]);
-        }
-    }
-}
-
-// Helper function to duplicate current working directory
-void duplicate_cwd(struct proc *parent, struct proc *child) {
-    child->cwd = edup(parent->cwd);
-}
-
-// Helper function to copy trapframe
-void copy_trapframe(struct proc *parent, struct proc *child, uint64 stack) {
-    *(child->trapframe) = *(parent->trapframe);
-    child->trapframe->a0 = 0;
-    child->trapframe->sp = stack;
-}
-
-// System call to clone a new process
-int clone(uint64 stack) {
-    struct proc *np;
-    struct proc *p = myproc();
-
-    if ((np = allocproc()) == NULL)
-        return -1;
-
-    if (uvmcopy(p->pagetable, np->pagetable, np->kpagetable, p->sz) < 0) {
-        freeproc(np);
         release(&np->lock);
+      }
+    }
+
+    if (!havekids || p->killed)
+    {
+      release(&p->lock);
+      return -1;
+    }
+
+    sleep(p, &p->lock);
+  }
+}
+
+// 创建子进程的克隆
+int clone(uint64 stack_ptr)
+{
+    struct proc *child_proc;
+    struct proc *current_proc = myproc();
+
+    // 分配新的进程结构
+    child_proc = allocproc();
+    if (child_proc == NULL)
+        return -1;
+
+    // 复制用户空间的页表
+    if (uvmcopy(current_proc->pagetable, child_proc->pagetable, child_proc->kpagetable, current_proc->sz) < 0) {
+        freeproc(child_proc);
+        release(&child_proc->lock);
         return -1;
     }
 
-    np->sz = p->sz;
-    np->parent = p;
-    np->tmask = p->tmask;
+    // 继承父进程的属性
+    child_proc->sz = current_proc->sz;
+    child_proc->parent = current_proc;
+    child_proc->tmask = current_proc->tmask;
 
-    copy_trapframe(p, np, stack);
-    duplicate_fds(p, np);
-    duplicate_cwd(p, np);
+    // 复制陷阱帧并设置返回值和堆栈指针
+    *(child_proc->trapframe) = *(current_proc->trapframe);
+    child_proc->trapframe->a0 = 0;
+    child_proc->trapframe->sp = stack_ptr;
 
-    safestrcpy(np->name, p->name, sizeof(np->name));
+    // 复制文件描述符
+    for (int fd = 0; fd < NOFILE; fd++) {
+        if (current_proc->ofile[fd])
+            child_proc->ofile[fd] = filedup(current_proc->ofile[fd]);
+    }
 
-    int pid = np->pid;
-    np->state = RUNNABLE;
+    // 复制当前工作目录
+    child_proc->cwd = edup(current_proc->cwd);
 
-    release(&np->lock);
+    // 复制进程名
+    safestrcpy(child_proc->name, current_proc->name, sizeof(child_proc->name));
 
-    return pid;
+    // 设置子进程为可运行状态
+    int child_pid = child_proc->pid;
+    child_proc->state = RUNNABLE;
+
+    // 释放子进程的锁
+    release(&child_proc->lock);
+
+    return child_pid;
 }
