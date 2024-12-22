@@ -173,110 +173,95 @@ uint64
 sys_getppid(void){
   return myproc()->parent->pid;
 }
-
+int get_and_copy(uint64 arg_index, void *dest, int size) {
+    uint64 addr;
+    if (argaddr(arg_index, &addr) < 0)
+        return -1;
+    if (copyout2(addr, (char *)dest, size) < 0)
+        return -1;
+    return 0;
+}
 // System call to get the current time of day
 uint64 sys_gettimeofday(void) {
-    uint64 addr;
     struct timespec tm;
-    uint tick_counter;
+    uint tick = r_time();
 
-    if (argaddr(0, &addr) < 0)
-        return -1;
+    tm.tv_sec = tick / 1000000;
+    tm.tv_nsec = (tick % 1000000) * 1000;
 
-    tick_counter = r_time();
-    tm.tv_sec = tick_counter / 1000000;
-    tm.tv_nsec = (tick_counter % 1000000) * 1000;
-
-    if (copyout2(addr, (char *)&tm, sizeof(tm)) < 0)
+    if (get_and_copy(0, &tm, sizeof(tm)) < 0)
         return -1;
 
     return 0;
 }
 
-uint64
-sys_uname(void){
-  struct uname{
-    char sysname[65];
-    char nodename[65];
-    char release[65];
-    char version[65];
-    char machine[65];
-    char domainname[65];
-  };
-  struct uname uname={"xv6","xv6","0","0","xv6","localhost"};
-  uint64 addr;
-  argaddr(0,&addr);
-  copyout2(addr,(char*)&uname,sizeof(uname));
-  return 0;
+uint64 sys_uname(void){
+    struct uname_info {
+        char sysname[65];
+        char nodename[65];
+        char release[65];
+        char version[65];
+        char machine[65];
+        char domainname[65];
+    } uname = {"xv6", "xv6", "0", "0", "xv6", "localhost"};
+
+    if (get_and_copy(0, &uname, sizeof(uname)) < 0)
+        return -1;
+
+    return 0;
 }
 // System call to get process times
 uint64 sys_times(void) {
-  uint64 addr;
-  struct tms tm;
-  uint tick_counter;
+    struct tms tm;
+    uint tick = r_time();
 
-  if (argaddr(0, &addr) < 0)
-    return -1;
+    tm.tms_utime = tm.tms_stime = tm.tms_cutime = tm.tms_cstime = tick / 1000000;
 
-  tick_counter = r_time();
-  tm.tms_utime = tick_counter / 1000000;
-  tm.tms_stime = tick_counter / 1000000;
-  tm.tms_cutime = tick_counter / 1000000;
-  tm.tms_cstime = tick_counter / 1000000;
+    if (get_and_copy(0, &tm, sizeof(tm)) < 0)
+        return -1;
 
-  if (copyout2(addr, (char *)&tm, sizeof(tm)) < 0)
-    return -1;
-
-  return 0;
+    return 0;
 }
 
-uint64
-sys_brk(void)
-{
-  uint64 new_addr;
-  int current_addr;
-  int increment;
+uint64 sys_brk(void) {
+    uint64 new_addr;
+    int increment;
 
-  if (argaddr(0, &new_addr) < 0)
-    return -1;
+    if (argaddr(0, &new_addr) < 0)
+        return -1;
 
-  current_addr = myproc()->sz;
+    int current = myproc()->sz;
 
-  if (new_addr == 0) {
-    return current_addr;  
-  }
+    if (new_addr == 0)
+        return current;
 
-  increment = (int)new_addr - current_addr;
-  if (growproc(increment) < 0)
-    return -1;
+    increment = (int)new_addr - current;
+    if (growproc(increment) < 0)
+        return -1;
 
-  return 0;
+    return 0;
 }
+uint64 sys_nanosleep(void) {
+    uint64 addr;
+    uint64 sleep_ticks;
+    int initial_ticks;
 
-uint64
-sys_nanosleep(void)
-{
-  uint64 addr;
-  uint64 sleep_ticks;
-  uint ticks0;
+    if (argaddr(0, &addr) < 0)
+        return -1;
 
-  if (argaddr(0, &addr) < 0)
-    return -1;
+    sleep_ticks = *(uint64 *)addr;
+    acquire(&tickslock);
+    initial_ticks = ticks;
 
-  sleep_ticks = *(uint64 *)addr;
-  acquire(&tickslock);
-  ticks0 = ticks;
-  while (ticks - ticks0 < sleep_ticks)
-  {
-    if (myproc()->killed)
-    {
-      release(&tickslock);
-      return -1;
+    while (ticks - initial_ticks < sleep_ticks) {
+        if (myproc()->killed) {
+            release(&tickslock);
+            return -1;
+        }
+        sleep(&ticks, &tickslock);
     }
-    sleep(&ticks, &tickslock);
-  }
-  release(&tickslock);
-  return 0;
+    release(&tickslock);
+    return 0;
 }
 
 
@@ -289,31 +274,17 @@ sys_yield(void){
   return 0;
 }
 
-uint64
-sys_clone(void)
-{
-  int stack;
-  if (argint(1, &stack) < 0)
-    return -1;
-  if (stack == 0)
-  {
-    return fork();
-  }
-  else
-  {
-    return clone(stack);
-  }
+uint64 sys_clone(void) {
+    int stack;
+    if (argint(1, &stack) < 0)
+        return -1;
+    return (stack == 0) ? fork() : clone_process(stack);
 }
 
-
-uint64
-sys_waitpid(void)
-{
-  int pid;
-  uint64 code;
-  if (argint(0, &pid) < 0)
-    return -1;
-  if (argaddr(1, &code) < 0)
-    return -1;
-  return wait4(pid, code);
+uint64 sys_waitpid(void) {
+    int pid;
+    uint64 code;
+    if (argint(0, &pid) < 0 || argaddr(1, &code) < 0)
+        return -1;
+    return wait4(pid, code);
 }
