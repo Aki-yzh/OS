@@ -274,13 +274,21 @@ sys_yield(void){
   return 0;
 }
 
-uint64 sys_clone(void) {
-    int stack;
-    if (argint(1, &stack) < 0)
-        return -1;
-    return (stack == 0) ? fork() : clone_process(stack);
+uint64
+sys_clone(void)
+{
+  int stack;
+  if (argint(1, &stack) < 0)
+    return -1;
+  if (stack == 0)
+  {
+    return fork();
+  }
+  else
+  {
+    return clone(stack);
+  }
 }
-
 uint64 sys_waitpid(void) {
     int pid;
     uint64 code;
